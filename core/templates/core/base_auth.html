@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Taxi Booking System{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'core/css/theme.css' %}?v=20261125">
+</head>
+<body>
+    <main class="tb-auth-shell">
+        <!-- Brand / Context Panel -->
+        <section class="tb-brand-panel" aria-hidden="true">
+            <div class="tb-brand-inner my-auto" style="max-width: 460px;">
+                <div class="tb-brand-badge">
+                    <i class="bi bi-taxi-front-fill"></i>
+                    <span>Taxi Booking System</span>
+                </div>
+                <h1 class="display-6 fw-bold mb-3">{% block brand_heading %}Fleet &amp; Dispatch Administration{% endblock %}</h1>
+                <p class="text-white-50 fs-6 mb-4">{% block brand_description %}Secure control center for managing taxi operations, drivers, users, and bookings.{% endblock %}</p>
+                <div class="d-flex flex-column gap-3 small text-light">
+                    {% block brand_highlights %}
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-shield-lock-fill text-warning"></i>
+                            <span>Protected by Django Session Authentication</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-speedometer2 text-warning"></i>
+                            <span>Unified Operations &amp; Fleet Control</span>
+                        </div>
+                    {% endblock %}
+                </div>
+            </div>
+            <div class="tb-brand-footer small text-white-50">
+                &copy; {% now "Y" %} Taxi Booking System
+            </div>
+        </section>
+
+        <!-- Form Panel -->
+        <section class="tb-auth-panel">
+            <div class="tb-auth-card {% block card_class %}{% endblock %}">
+                <div class="d-flex d-lg-none align-items-center gap-2 mb-3 pb-3 border-bottom">
+                    <span class="tb-logo-mark"><i class="bi bi-taxi-front-fill"></i></span>
+                    <span class="fw-bold fs-6">Taxi Booking System</span>
+                </div>
+
+                {% block card_content %}{% endblock %}
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'core/js/auth.js' %}?v=20261125"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,105 @@
+{% extends 'core/base_auth.html' %}
+
+{% block title %}User Registration | Taxi Booking System{% endblock %}
+{% block card_class %}tb-auth-card-wide{% endblock %}
+
+{% block brand_heading %}Book Rides in Minutes{% endblock %}
+{% block brand_description %}Create your Taxi Booking System passenger account to book rides reliably and manage your profile.{% endblock %}
+{% block brand_highlights %}
+<div class="d-flex align-items-center gap-2">
+    <i class="bi bi-lightning-charge-fill text-warning"></i>
+    <span>Fast &amp; Simple Account Setup</span>
+</div>
+<div class="d-flex align-items-center gap-2">
+    <i class="bi bi-shield-lock-fill text-warning"></i>
+    <span>Encrypted Password Protection</span>
+</div>
+{% endblock %}
+
+{% block card_content %}
+<header class="mb-4">
+    <span class="tb-pill mb-2"><i class="bi bi-person-check-fill"></i> Passenger Portal</span>
+    <h2 class="h4 fw-bold mb-1">User Registration</h2>
+    <p class="text-muted small mb-0">Register with your name, email, phone number, and password.</p>
+</header>
+
+{% if messages %}
+    <div class="mb-3" role="status" aria-live="polite">
+        {% for message in messages %}
+            <div class="alert alert-{% if 'error' in message.tags %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} d-flex align-items-center gap-2 py-2 px-3 small mb-2">
+                <i class="bi {% if 'error' in message.tags %}bi-exclamation-circle-fill{% else %}bi-check-circle-fill{% endif %}"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<form id="userRegisterForm" method="post" action="{% url 'core:user_register' %}" novalidate>
+    {% csrf_token %}
+
+    <div class="mb-3 {% if form.name.errors %}has-error{% endif %}">
+        <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold small">{{ form.name.label }}</label>
+        <div class="tb-input-group">
+            <i class="bi bi-person tb-input-icon" aria-hidden="true"></i>
+            {{ form.name }}
+        </div>
+        <div class="tb-field-error" role="alert">
+            {% if form.name.errors %}{{ form.name.errors.0 }}{% endif %}
+        </div>
+    </div>
+
+    <div class="mb-3 {% if form.email.errors %}has-error{% endif %}">
+        <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold small">{{ form.email.label }}</label>
+        <div class="tb-input-group">
+            <i class="bi bi-envelope tb-input-icon" aria-hidden="true"></i>
+            {{ form.email }}
+        </div>
+        <div class="tb-field-error" role="alert">
+            {% if form.email.errors %}{{ form.email.errors.0 }}{% endif %}
+        </div>
+    </div>
+
+    <div class="mb-3 {% if form.phone.errors %}has-error{% endif %}">
+        <label for="{{ form.phone.id_for_label }}" class="form-label fw-semibold small">{{ form.phone.label }}</label>
+        <div class="tb-input-group">
+            <i class="bi bi-telephone tb-input-icon" aria-hidden="true"></i>
+            {{ form.phone }}
+        </div>
+        <div class="tb-field-error" role="alert">
+            {% if form.phone.errors %}{{ form.phone.errors.0 }}{% endif %}
+        </div>
+    </div>
+
+    <div class="mb-4 {% if form.password.errors %}has-error{% endif %}">
+        <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold small">{{ form.password.label }}</label>
+        <div class="tb-input-group">
+            <i class="bi bi-lock tb-input-icon" aria-hidden="true"></i>
+            {{ form.password }}
+            <button
+                type="button"
+                class="tb-pw-toggle"
+                data-toggle-password="id_user_password"
+                aria-label="Show password"
+                aria-pressed="false"
+                title="Show password"
+            >
+                <i class="bi bi-eye icon-eye"></i>
+                <i class="bi bi-eye-slash icon-eye-off hidden"></i>
+            </button>
+        </div>
+        <div class="form-text small">Use at least 8 characters with letters and numbers.</div>
+        <div class="tb-field-error" role="alert">
+            {% if form.password.errors %}{{ form.password.errors.0 }}{% endif %}
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-taxi w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+        <span>Create Account</span>
+        <i class="bi bi-arrow-right"></i>
+    </button>
+</form>
+
+<footer class="mt-4 pt-3 border-top text-center small text-muted">
+    <p class="mb-0">Administrator? <a href="{% url 'core:admin_login' %}" class="tb-auth-link">Admin Sign In</a></p>
+</footer>
+{% endblock %}

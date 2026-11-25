@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import AdminProfile
+from driver.models import Driver
 from user.models import User as PassengerUser
 
 User = get_user_model()
@@ -305,14 +306,17 @@ class BootstrapDashboardAndUserManagementTests(TestCase):
         )
         self.client.force_login(self.admin_user)
 
-    def test_dashboard_has_bootstrap_navbar_options_without_links_and_profile_image(self):
+    def test_dashboard_has_bootstrap_navbar_options_and_profile_image(self):
         response = self.client.get(reverse('core:admin_dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'bootstrap.min.css')
+        self.assertContains(response, 'bootstrap-icons.min.css')
         self.assertContains(response, 'admin-avatar.svg')
-        self.assertContains(response, '<span class="nav-link nav-option-text">Drivers</span>')
-        self.assertContains(response, '<span class="nav-link nav-option-text">Users</span>')
-        self.assertContains(response, '<span class="nav-link nav-option-text">Bookings</span>')
+        self.assertContains(response, '<span>Dashboard</span>')
+        self.assertContains(response, '<span>Drivers</span>')
+        self.assertContains(response, '<span>Users</span>')
+        self.assertContains(response, '<span>Bookings</span>')
+        self.assertContains(response, '<span>Logout</span>')
 
     def test_placeholder_views_render(self):
         for route in ('core:drivers_placeholder', 'core:users_placeholder', 'core:bookings_placeholder'):
@@ -356,3 +360,155 @@ class BootstrapDashboardAndUserManagementTests(TestCase):
         delete_res = self.client.post(delete_url, follow=True)
         self.assertRedirects(delete_res, list_url)
         self.assertFalse(PassengerUser.objects.filter(pk=passenger.id).exists())
+
+    def test_user_detail_and_search_by_name_or_email(self):
+        u1 = PassengerUser.objects.create(
+            name='Aarav Mehta',
+            email='aarav@example.com',
+            mobile='9876500001',
+            password='UserPass123!',
+        )
+        u2 = PassengerUser.objects.create(
+            name='Priya Shah',
+            email='priya@example.com',
+            mobile='9876500002',
+            password='UserPass123!',
+        )
+
+        detail_res = self.client.get(reverse('core:user_detail', args=[u1.id]))
+        self.assertEqual(detail_res.status_code, 200)
+        self.assertTemplateUsed(detail_res, 'core/user_detail.html')
+        self.assertContains(detail_res, 'Aarav Mehta')
+        self.assertContains(detail_res, 'aarav@example.com')
+        self.assertContains(detail_res, '9876500001')
+
+        list_url = reverse('core:user_list')
+        search_by_name = self.client.get(list_url, {'q': 'Aarav'})
+        self.assertContains(search_by_name, 'Aarav Mehta')
+        self.assertNotContains(search_by_name, 'Priya Shah')
+
+        search_by_email = self.client.get(list_url, {'q': 'priya@example.com'})
+        self.assertContains(search_by_email, 'Priya Shah')
+        self.assertNotContains(search_by_email, 'Aarav Mehta')
+
+
+class DriverManagementTests(TestCase):
+    """Tests for Tasks 21-25 (Driver model, listing, search, profile, booking history placeholder, delete)."""
+
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(
+            username='driveradmin',
+            email='driveradmin@example.com',
+            password='AdminPassword123!',
+        )
+        self.driver_list_url = reverse('core:driver_list')
+
+    def test_unauthenticated_driver_list_redirects_to_login(self):
+        response = self.client.get(self.driver_list_url)
+        self.assertRedirects(response, f"{reverse('core:admin_login')}?next={self.driver_list_url}")
+
+    def test_driver_create_list_search_detail_and_delete(self):
+        self.client.force_login(self.admin_user)
+
+        create_res = self.client.post(
+            self.driver_list_url,
+            {
+                'name': 'Vikram Desai',
+                'email': 'vikram@example.com',
+                'license_number': 'GJ01-2026-1001',
+                'mobile': '9898011223',
+                'password': 'DriverPass123!',
+            },
+            follow=True,
+        )
+        self.assertRedirects(create_res, self.driver_list_url)
+        self.assertContains(create_res, 'Vikram Desai')
+        self.assertContains(create_res, 'GJ01-2026-1001')
+
+        driver = Driver.objects.get(email='vikram@example.com')
+        self.assertNotEqual(driver.password, 'DriverPass123!')
+
+        dash_res = self.client.get(reverse('core:admin_dashboard'))
+        self.assertEqual(dash_res.context['total_drivers'], 1)
+
+        Driver.objects.create(
+            name='Karan Joshi',
+            email='karan@example.com',
+            license_number='GJ05-2026-2002',
+            mobile='9898099887',
+            password='DriverPass123!',
+        )
+
+        search_res = self.client.get(self.driver_list_url, {'q': 'GJ01-2026-1001'})
+        self.assertContains(search_res, 'Vikram Desai')
+        self.assertNotContains(search_res, 'Karan Joshi')
+
+        detail_res = self.client.get(reverse('core:driver_detail', args=[driver.id]))
+        self.assertEqual(detail_res.status_code, 200)
+        self.assertTemplateUsed(detail_res, 'core/driver_detail.html')
+        self.assertContains(detail_res, 'Vikram Desai')
+        self.assertContains(detail_res, 'No Booking History Yet')
+
+        delete_res = self.client.post(reverse('core:driver_delete', args=[driver.id]), follow=True)
+        self.assertRedirects(delete_res, self.driver_list_url)
+        self.assertFalse(Driver.objects.filter(pk=driver.id).exists())
+
+
+class UserRegistrationTests(TestCase):
+    """Tests for Task 26 (Public User registration page with name, email, phone, password)."""
+
+    def setUp(self):
+        self.register_url = reverse('core:user_register')
+
+    def test_user_registration_page_renders_required_fields(self):
+        response = self.client.get(self.register_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'core/user_register.html')
+        self.assertContains(response, 'name="name"')
+        self.assertContains(response, 'name="email"')
+        self.assertContains(response, 'name="phone"')
+        self.assertContains(response, 'name="password"')
+        self.assertContains(response, 'data-toggle-password="id_user_password"')
+
+    def test_valid_user_registration_creates_hashed_passenger(self):
+        response = self.client.post(
+            self.register_url,
+            {
+                'name': 'Neha Trivedi',
+                'email': 'neha@example.com',
+                'phone': '9123456789',
+                'password': 'NehaStrongPass123!',
+            },
+            follow=True,
+        )
+        self.assertRedirects(response, self.register_url)
+        self.assertContains(response, 'Account registered successfully!')
+
+        user = PassengerUser.objects.get(email='neha@example.com')
+        self.assertEqual(user.name, 'Neha Trivedi')
+        self.assertEqual(user.mobile, '9123456789')
+        self.assertNotEqual(user.password, 'NehaStrongPass123!')
+
+    def test_duplicate_email_and_empty_submission_rejected(self):
+        PassengerUser.objects.create(
+            name='Existing User',
+            email='dup@example.com',
+            mobile='9000011111',
+            password='UserPass123!',
+        )
+        empty_res = self.client.post(self.register_url, {})
+        self.assertEqual(empty_res.status_code, 200)
+        self.assertContains(empty_res, 'Please enter your name.')
+        self.assertContains(empty_res, 'Please enter your phone number.')
+
+        dup_res = self.client.post(
+            self.register_url,
+            {
+                'name': 'New User',
+                'email': 'DUP@example.com',
+                'phone': '9000022222',
+                'password': 'StrongUserPass123!',
+            },
+        )
+        self.assertEqual(dup_res.status_code, 200)
+        self.assertContains(dup_res, 'A user with this email address is already registered.')

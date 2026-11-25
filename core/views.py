@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
@@ -16,9 +17,12 @@ from .forms import (
     AdminRegistrationForm,
     AdminResetPasswordForm,
     AdminVerifyOTPForm,
+    DriverForm,
     PassengerUserForm,
+    UserRegistrationForm,
 )
 from .models import AdminProfile
+from driver.models import Driver
 from user.models import User as PassengerUser
 
 User = get_user_model()
@@ -124,8 +128,9 @@ def admin_dashboard(request):
         **_get_admin_context(request),
         'total_users': PassengerUser.objects.count(),
         'total_admins': AdminProfile.objects.count(),
-        'total_drivers': 0,
+        'total_drivers': Driver.objects.count(),
         'total_bookings': 0,
+        'active_nav': 'dashboard',
     }
     return render(request, 'core/dashboard.html', context)
 
@@ -140,6 +145,7 @@ def drivers_placeholder(request):
         **_get_admin_context(request),
         'module_name': 'Drivers',
         'module_description': 'Driver registration, license verification, and vehicle assignment will be managed here.',
+        'active_nav': 'drivers',
     }
     return render(request, 'core/placeholder.html', context)
 
@@ -153,6 +159,7 @@ def users_placeholder(request):
         **_get_admin_context(request),
         'module_name': 'Users',
         'module_description': 'Passenger management module overview.',
+        'active_nav': 'users',
     }
     return render(request, 'core/placeholder.html', context)
 
@@ -166,8 +173,92 @@ def bookings_placeholder(request):
         **_get_admin_context(request),
         'module_name': 'Bookings',
         'module_description': 'Taxi ride bookings, fare calculation, and dispatch tracking will be managed here.',
+        'active_nav': 'bookings',
     }
     return render(request, 'core/placeholder.html', context)
+
+
+# Tasks 22-25: Driver listing, search, profile, empty booking history, and delete
+@never_cache
+@login_required
+def driver_list(request):
+    """List all drivers, support search, and allow adding a new driver."""
+    if not _is_admin_user(request.user):
+        return redirect('core:admin_login')
+
+    form = DriverForm(request.POST if request.method == 'POST' else None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'New driver added successfully.')
+        return redirect('core:driver_list')
+
+    search_query = request.GET.get('q', '').strip()
+    drivers = Driver.objects.order_by('-created_at')
+    if search_query:
+        drivers = drivers.filter(
+            Q(name__icontains=search_query)
+            | Q(email__icontains=search_query)
+            | Q(license_number__icontains=search_query)
+            | Q(mobile__icontains=search_query)
+        )
+
+    context = {
+        **_get_admin_context(request),
+        'drivers': drivers,
+        'form': form,
+        'search_query': search_query,
+        'active_nav': 'drivers',
+    }
+    return render(request, 'core/drivers_list.html', context)
+
+
+@never_cache
+@login_required
+def driver_detail(request, driver_id):
+    """Display detailed profile and empty booking history placeholder for a driver."""
+    if not _is_admin_user(request.user):
+        return redirect('core:admin_login')
+
+    driver = get_object_or_404(Driver, pk=driver_id)
+    context = {
+        **_get_admin_context(request),
+        'driver': driver,
+        'active_nav': 'drivers',
+    }
+    return render(request, 'core/driver_detail.html', context)
+
+
+@require_POST
+@login_required
+def driver_delete(request, driver_id):
+    """Delete an existing driver."""
+    if not _is_admin_user(request.user):
+        return redirect('core:admin_login')
+
+    driver = get_object_or_404(Driver, pk=driver_id)
+    name = driver.name
+    driver.delete()
+    messages.success(request, f'Driver "{name}" deleted successfully.')
+    return redirect('core:driver_list')
+
+
+# Task 26: Public User Registration page
+@never_cache
+def user_register(request):
+    """Handle passenger/user registration with name, email, phone, and password."""
+    form = UserRegistrationForm(request.POST if request.method == 'POST' else None)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                'Account registered successfully! You are now registered with Taxi Booking System.',
+            )
+            return redirect('core:user_register')
+        messages.error(request, 'Registration failed. Please fix the errors below.')
+
+    return render(request, 'core/user_register.html', {'form': form})
 
 
 # Task 17: User listing page for admin with add / edit / delete options
@@ -184,13 +275,37 @@ def user_list(request):
         messages.success(request, 'New user added successfully.')
         return redirect('core:user_list')
 
+    search_query = request.GET.get('q', '').strip()
     users = PassengerUser.objects.order_by('-created_at')
+    if search_query:
+        users = users.filter(
+            Q(name__icontains=search_query) | Q(email__icontains=search_query)
+        )
+
     context = {
         **_get_admin_context(request),
         'users': users,
         'form': form,
+        'search_query': search_query,
+        'active_nav': 'users',
     }
     return render(request, 'core/users_list.html', context)
+
+
+@never_cache
+@login_required
+def user_detail(request, user_id):
+    """Display detailed profile information for a single user."""
+    if not _is_admin_user(request.user):
+        return redirect('core:admin_login')
+
+    passenger = get_object_or_404(PassengerUser, pk=user_id)
+    context = {
+        **_get_admin_context(request),
+        'passenger': passenger,
+        'active_nav': 'users',
+    }
+    return render(request, 'core/user_detail.html', context)
 
 
 @never_cache
@@ -212,6 +327,7 @@ def user_edit(request, user_id):
         **_get_admin_context(request),
         'form': form,
         'passenger': passenger,
+        'active_nav': 'users',
     }
     return render(request, 'core/user_edit.html', context)
 

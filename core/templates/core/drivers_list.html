@@ -1,0 +1,150 @@
+{% extends 'core/base_admin.html' %}
+
+{% block title %}Drivers List | Taxi Booking System{% endblock %}
+{% block page_title %}Drivers Management{% endblock %}
+{% block page_subtitle %}Register drivers, search fleet profiles, and manage driver accounts{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Add New Driver Card -->
+    <div class="col-12 col-lg-4">
+        <div class="tb-card">
+            <div class="p-3 border-bottom d-flex align-items-center gap-2">
+                <span class="tb-stat-icon yellow" style="width: 34px; height: 34px; font-size: 1rem;">
+                    <i class="bi bi-car-front-fill"></i>
+                </span>
+                <h2 class="h6 fw-bold mb-0">Add New Driver</h2>
+            </div>
+            <div class="p-3">
+                <form method="post" action="{% url 'core:driver_list' %}" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3 {% if form.name.errors %}has-error{% endif %}">
+                        <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold small">Driver Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="tb-field-error">{{ form.name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3 {% if form.email.errors %}has-error{% endif %}">
+                        <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold small">Email</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<div class="tb-field-error">{{ form.email.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3 {% if form.license_number.errors %}has-error{% endif %}">
+                        <label for="{{ form.license_number.id_for_label }}" class="form-label fw-semibold small">License Number</label>
+                        {{ form.license_number }}
+                        {% if form.license_number.errors %}<div class="tb-field-error">{{ form.license_number.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3 {% if form.mobile.errors %}has-error{% endif %}">
+                        <label for="{{ form.mobile.id_for_label }}" class="form-label fw-semibold small">Mobile Number</label>
+                        {{ form.mobile }}
+                        {% if form.mobile.errors %}<div class="tb-field-error">{{ form.mobile.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3 {% if form.password.errors %}has-error{% endif %}">
+                        <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold small">Password</label>
+                        <div class="tb-input-group">
+                            {{ form.password }}
+                            <button
+                                type="button"
+                                class="tb-pw-toggle"
+                                data-toggle-password="id_driver_password"
+                                aria-label="Show password"
+                                aria-pressed="false"
+                                title="Show password"
+                            >
+                                <i class="bi bi-eye icon-eye"></i>
+                                <i class="bi bi-eye-slash icon-eye-off hidden"></i>
+                            </button>
+                        </div>
+                        {% if form.password.errors %}<div class="tb-field-error">{{ form.password.errors.0 }}</div>{% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-taxi w-100 py-2">
+                        <i class="bi bi-plus-circle me-1"></i> Add Driver
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drivers Table Card -->
+    <div class="col-12 col-lg-8">
+        <div class="tb-card overflow-hidden">
+            <div class="p-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <h2 class="h6 fw-bold mb-0">Registered Drivers</h2>
+                    <span class="badge text-bg-dark">{{ drivers|length }} Total</span>
+                </div>
+
+                <form method="get" action="{% url 'core:driver_list' %}" class="d-flex gap-2">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input
+                            type="text"
+                            name="q"
+                            value="{{ search_query }}"
+                            class="form-control"
+                            placeholder="Search name, email, license..."
+                            aria-label="Search drivers"
+                        >
+                        <button type="submit" class="btn btn-dark-tb btn-sm">Search</button>
+                    </div>
+                    {% if search_query %}
+                        <a href="{% url 'core:driver_list' %}" class="btn btn-sm btn-outline-secondary">Clear</a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover tb-table mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">#</th>
+                            <th>Driver Name</th>
+                            <th>Email</th>
+                            <th>Mobile</th>
+                            <th>License Number</th>
+                            <th class="text-end pe-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for driver in drivers %}
+                            <tr>
+                                <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+                                <td class="fw-semibold">{{ driver.name }}</td>
+                                <td>{{ driver.email }}</td>
+                                <td>{{ driver.mobile }}</td>
+                                <td><span class="badge text-bg-warning text-dark">{{ driver.license_number }}</span></td>
+                                <td class="text-end pe-3 text-nowrap">
+                                    <a href="{% url 'core:driver_detail' driver.id %}" class="btn btn-sm btn-outline-dark" title="View driver profile">
+                                        <i class="bi bi-eye me-1"></i>View
+                                    </a>
+                                    <form method="post" action="{% url 'core:driver_delete' driver.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete driver {{ driver.name }}?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete driver">
+                                            <i class="bi bi-trash me-1"></i>Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="p-0">
+                                    <div class="tb-empty-state">
+                                        <div class="tb-empty-icon"><i class="bi bi-car-front"></i></div>
+                                        <h3 class="h6 fw-bold text-dark mb-1">No Drivers Found</h3>
+                                        <p class="small mb-0">
+                                            {% if search_query %}
+                                                No drivers matched "{{ search_query }}". Try a different search term.
+                                            {% else %}
+                                                No drivers have been added yet. Use the form on the left to add a driver.
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

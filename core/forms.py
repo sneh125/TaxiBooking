@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from .models import AdminProfile
+from driver.models import Driver
 from user.models import User as PassengerUser
 
 User = get_user_model()
@@ -24,7 +25,7 @@ class AdminLoginForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 'id': 'id_username',
-                'class': 'form-input',
+                'class': 'form-control tb-input',
                 'placeholder': 'Enter your admin username',
                 'autocomplete': 'username',
                 'autofocus': True,
@@ -40,7 +41,7 @@ class AdminLoginForm(forms.Form):
         widget=forms.PasswordInput(
             attrs={
                 'id': 'id_password',
-                'class': 'form-input form-input-password',
+                'class': 'form-control tb-input tb-input-password',
                 'placeholder': 'Enter your password',
                 'autocomplete': 'current-password',
             }
@@ -62,7 +63,7 @@ class AdminRegistrationForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 'id': 'id_full_name',
-                'class': 'form-input',
+                'class': 'form-control tb-input',
                 'placeholder': 'Enter your full name',
                 'autocomplete': 'name',
                 'autofocus': True,
@@ -80,7 +81,7 @@ class AdminRegistrationForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 'id': 'id_username',
-                'class': 'form-input',
+                'class': 'form-control tb-input',
                 'placeholder': 'Choose an admin username',
                 'autocomplete': 'username',
             }
@@ -96,7 +97,7 @@ class AdminRegistrationForm(forms.Form):
         widget=forms.EmailInput(
             attrs={
                 'id': 'id_email',
-                'class': 'form-input',
+                'class': 'form-control tb-input',
                 'placeholder': 'admin@example.com',
                 'autocomplete': 'email',
             }
@@ -111,7 +112,7 @@ class AdminRegistrationForm(forms.Form):
         widget=forms.PasswordInput(
             attrs={
                 'id': 'id_password',
-                'class': 'form-input form-input-password',
+                'class': 'form-control tb-input tb-input-password',
                 'placeholder': 'Create a strong password',
                 'autocomplete': 'new-password',
             }
@@ -126,7 +127,7 @@ class AdminRegistrationForm(forms.Form):
         widget=forms.PasswordInput(
             attrs={
                 'id': 'id_confirm_password',
-                'class': 'form-input form-input-password',
+                'class': 'form-control tb-input tb-input-password',
                 'placeholder': 'Re-enter your password',
                 'autocomplete': 'new-password',
             }
@@ -209,7 +210,7 @@ class AdminForgotPasswordForm(forms.Form):
         widget=forms.EmailInput(
             attrs={
                 'id': 'id_email',
-                'class': 'form-input',
+                'class': 'form-control tb-input',
                 'placeholder': 'Enter your registered admin email',
                 'autocomplete': 'email',
                 'autofocus': True,
@@ -237,7 +238,7 @@ class AdminVerifyOTPForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 'id': 'id_otp',
-                'class': 'form-input',
+                'class': 'form-control tb-input',
                 'placeholder': 'Enter 6-digit OTP',
                 'inputmode': 'numeric',
                 'maxlength': '6',
@@ -264,7 +265,7 @@ class AdminResetPasswordForm(forms.Form):
         widget=forms.PasswordInput(
             attrs={
                 'id': 'id_new_password',
-                'class': 'form-input form-input-password',
+                'class': 'form-control tb-input tb-input-password',
                 'placeholder': 'Create a new strong password',
                 'autocomplete': 'new-password',
                 'autofocus': True,
@@ -278,7 +279,7 @@ class AdminResetPasswordForm(forms.Form):
         widget=forms.PasswordInput(
             attrs={
                 'id': 'id_confirm_password',
-                'class': 'form-input form-input-password',
+                'class': 'form-control tb-input tb-input-password',
                 'placeholder': 'Re-enter your new password',
                 'autocomplete': 'new-password',
             }
@@ -313,7 +314,11 @@ class PassengerUserForm(forms.ModelForm):
         label='Password',
         required=False,
         widget=forms.PasswordInput(
-            attrs={'class': 'form-control', 'placeholder': 'Enter password'}
+            attrs={
+                'id': 'id_passenger_password',
+                'class': 'form-control tb-input-password',
+                'placeholder': 'Enter password',
+            }
         ),
     )
 
@@ -344,3 +349,155 @@ class PassengerUserForm(forms.ModelForm):
         if commit:
             user_obj.save()
         return user_obj
+
+
+class DriverForm(forms.ModelForm):
+    """Form to create a Driver record in the Taxi Booking System."""
+
+    password = forms.CharField(
+        label='Password',
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={
+                'id': 'id_driver_password',
+                'class': 'form-control tb-input-password',
+                'placeholder': 'Enter password',
+            }
+        ),
+    )
+
+    class Meta:
+        model = Driver
+        fields = ['name', 'email', 'license_number', 'mobile', 'password']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Driver full name'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'driver@example.com'}),
+            'license_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. GJ01-2026-001234'}),
+            'mobile': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile number'}),
+        }
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        qs = Driver.objects.filter(email__iexact=email)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise ValidationError('A driver with this email address already exists.')
+        return email
+
+    def clean_license_number(self):
+        license_number = self.cleaned_data['license_number'].strip().upper()
+        qs = Driver.objects.filter(license_number__iexact=license_number)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise ValidationError('A driver with this license number already exists.')
+        return license_number
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password', '')
+        if not self.instance.pk and not password:
+            raise ValidationError('Please enter a password for the new driver.')
+        return password
+
+    def save(self, commit=True):
+        driver_obj = super().save(commit=False)
+        raw_password = self.cleaned_data.get('password')
+        if raw_password:
+            driver_obj.password = raw_password
+        elif self.instance.pk:
+            driver_obj.password = Driver.objects.get(pk=self.instance.pk).password
+        if commit:
+            driver_obj.save()
+        return driver_obj
+
+
+class UserRegistrationForm(forms.Form):
+    """Public user registration form (Task 26: Name, Email, Phone, Password)."""
+
+    name = forms.CharField(
+        label='Name',
+        max_length=120,
+        strip=True,
+        error_messages={
+            'required': 'Please enter your name.',
+            'max_length': 'Name must be 120 characters or fewer.',
+        },
+        widget=forms.TextInput(
+            attrs={
+                'id': 'id_name',
+                'class': 'form-control tb-input',
+                'placeholder': 'Enter your full name',
+                'autocomplete': 'name',
+                'autofocus': True,
+            }
+        ),
+    )
+    email = forms.EmailField(
+        label='Email',
+        max_length=254,
+        error_messages={
+            'required': 'Please enter your email address.',
+            'invalid': 'Please enter a valid email address.',
+        },
+        widget=forms.EmailInput(
+            attrs={
+                'id': 'id_email',
+                'class': 'form-control tb-input',
+                'placeholder': 'you@example.com',
+                'autocomplete': 'email',
+            }
+        ),
+    )
+    phone = forms.CharField(
+        label='Phone',
+        max_length=15,
+        strip=True,
+        error_messages={
+            'required': 'Please enter your phone number.',
+            'max_length': 'Phone number must be 15 characters or fewer.',
+        },
+        widget=forms.TextInput(
+            attrs={
+                'id': 'id_phone',
+                'class': 'form-control tb-input',
+                'placeholder': 'Enter your mobile number',
+                'autocomplete': 'tel',
+            }
+        ),
+    )
+    password = forms.CharField(
+        label='Password',
+        strip=False,
+        error_messages={
+            'required': 'Please enter a password.',
+        },
+        widget=forms.PasswordInput(
+            attrs={
+                'id': 'id_user_password',
+                'class': 'form-control tb-input tb-input-password',
+                'placeholder': 'Create a strong password',
+                'autocomplete': 'new-password',
+            }
+        ),
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        if PassengerUser.objects.filter(email__iexact=email).exists():
+            raise ValidationError('A user with this email address is already registered.')
+        return email
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password', '')
+        if password:
+            validate_password(password)
+        return password
+
+    def save(self):
+        return PassengerUser.objects.create(
+            name=self.cleaned_data['name'],
+            email=self.cleaned_data['email'],
+            mobile=self.cleaned_data['phone'],
+            password=self.cleaned_data['password'],
+        )

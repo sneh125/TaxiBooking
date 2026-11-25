@@ -1,0 +1,81 @@
+{% extends 'core/base_admin.html' %}
+
+{% block title %}Driver Profile | {{ driver.name }}{% endblock %}
+{% block page_title %}Driver Profile{% endblock %}
+{% block page_subtitle %}Profile details and booking history for {{ driver.name }}{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Driver Profile Card -->
+    <div class="col-12 col-lg-5">
+        <div class="tb-card overflow-hidden h-100">
+            <div class="p-4 bg-dark text-white d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="tb-logo-mark" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                        <i class="bi bi-car-front-fill"></i>
+                    </span>
+                    <div>
+                        <span class="badge text-bg-warning text-dark mb-1">Driver #{{ driver.id }}</span>
+                        <h2 class="h4 fw-bold mb-0">{{ driver.name }}</h2>
+                    </div>
+                </div>
+                <a href="{% url 'core:driver_list' %}" class="btn btn-sm btn-outline-light">Back</a>
+            </div>
+
+            <div class="p-4">
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between px-0 py-3">
+                        <span class="text-muted"><i class="bi bi-person me-2"></i>Driver Name</span>
+                        <span class="fw-semibold">{{ driver.name }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0 py-3">
+                        <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email</span>
+                        <span class="fw-semibold">{{ driver.email }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0 py-3">
+                        <span class="text-muted"><i class="bi bi-telephone me-2"></i>Mobile Number</span>
+                        <span class="fw-semibold">{{ driver.mobile }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0 py-3">
+                        <span class="text-muted"><i class="bi bi-card-heading me-2"></i>License Number</span>
+                        <span class="badge text-bg-warning text-dark">{{ driver.license_number }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0 py-3">
+                        <span class="text-muted"><i class="bi bi-calendar3 me-2"></i>Registered On</span>
+                        <span class="fw-semibold">{{ driver.created_at|date:"M d, Y H:i" }}</span>
+                    </li>
+                </ul>
+
+                <div class="d-flex gap-2">
+                    <form method="post" action="{% url 'core:driver_delete' driver.id %}" class="d-inline" onsubmit="return confirm('Delete driver {{ driver.name }}?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i> Delete Driver
+                        </button>
+                    </form>
+                    <a href="{% url 'core:driver_list' %}" class="btn btn-outline-secondary ms-auto">Back to Drivers</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Driver Booking History Placeholder (Task 23) -->
+    <div class="col-12 col-lg-7">
+        <div class="tb-card h-100">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h2 class="h6 fw-bold mb-0"><i class="bi bi-clock-history text-warning me-2"></i>Driver Booking History</h2>
+                <span class="badge text-bg-light border text-dark">0 Rides</span>
+            </div>
+            <div class="tb-empty-state py-5">
+                <div class="tb-empty-icon" style="background-color: var(--tb-yellow-soft); color: #9a6d00;">
+                    <i class="bi bi-journal-x"></i>
+                </div>
+                <h3 class="h6 fw-bold text-dark mb-1">No Booking History Yet</h3>
+                <p class="small mx-auto mb-0" style="max-width: 380px;">
+                    Booking history for <strong>{{ driver.name }}</strong> will appear here once the Taxi Booking module is connected.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

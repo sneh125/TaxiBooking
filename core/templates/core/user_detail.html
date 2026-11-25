@@ -1,0 +1,60 @@
+{% extends 'core/base_admin.html' %}
+
+{% block title %}User Profile | {{ passenger.name }}{% endblock %}
+{% block page_title %}User Details{% endblock %}
+{% block page_subtitle %}Detailed profile for {{ passenger.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="tb-card overflow-hidden">
+            <div class="p-4 bg-dark text-white d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="tb-logo-mark" style="width: 52px; height: 52px; font-size: 1.5rem;">
+                        <i class="bi bi-person-fill"></i>
+                    </span>
+                    <div>
+                        <span class="badge text-bg-warning text-dark mb-1">User #{{ passenger.id }}</span>
+                        <h2 class="h4 fw-bold mb-0">{{ passenger.name }}</h2>
+                    </div>
+                </div>
+                <a href="{% url 'core:user_list' %}" class="btn btn-sm btn-outline-light">Back to Users</a>
+            </div>
+
+            <div class="p-4">
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between px-0 py-3">
+                        <span class="text-muted"><i class="bi bi-person me-2"></i>Full Name</span>
+                        <span class="fw-semibold">{{ passenger.name }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0 py-3">
+                        <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email Address</span>
+                        <span class="fw-semibold">{{ passenger.email }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0 py-3">
+                        <span class="text-muted"><i class="bi bi-telephone me-2"></i>Mobile Number</span>
+                        <span class="fw-semibold">{{ passenger.mobile }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0 py-3">
+                        <span class="text-muted"><i class="bi bi-calendar3 me-2"></i>Joined On</span>
+                        <span class="fw-semibold">{{ passenger.created_at|date:"M d, Y H:i" }}</span>
+                    </li>
+                </ul>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'core:user_edit' passenger.id %}" class="btn btn-taxi">
+                        <i class="bi bi-pencil-square me-1"></i> Edit User
+                    </a>
+                    <form method="post" action="{% url 'core:user_delete' passenger.id %}" class="d-inline" onsubmit="return confirm('Delete user {{ passenger.name }}?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i> Delete User
+                        </button>
+                    </form>
+                    <a href="{% url 'core:user_list' %}" class="btn btn-outline-secondary ms-auto">Back</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

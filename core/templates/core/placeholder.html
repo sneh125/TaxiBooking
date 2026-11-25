@@ -1,17 +1,21 @@
 {% extends 'core/base_admin.html' %}
 
 {% block title %}{{ module_name }} Module | Taxi Booking System{% endblock %}
+{% block page_title %}{{ module_name }} Module{% endblock %}
+{% block page_subtitle %}Upcoming module placeholder{% endblock %}
 
 {% block content %}
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-5 text-center">
-        <span class="badge text-bg-warning mb-3">Coming Soon</span>
-        <h1 class="h3 fw-bold mb-2">{{ module_name }} Module</h1>
-        <p class="text-muted mx-auto mb-4" style="max-width: 520px;">
-            {{ module_description }}
-        </p>
-        <a href="{% url 'core:admin_dashboard' %}" class="btn btn-dark">Back to Dashboard</a>
+<div class="tb-card p-5 text-center">
+    <div class="tb-empty-icon mx-auto" style="background-color: var(--tb-yellow-soft); color: #9a6d00;">
+        <i class="bi bi-hourglass-split"></i>
     </div>
+    <span class="tb-pill mb-3">Coming Soon</span>
+    <h2 class="h4 fw-bold mb-2">{{ module_name }} Module</h2>
+    <p class="text-muted mx-auto mb-4" style="max-width: 520px;">
+        {{ module_description }}
+    </p>
+    <a href="{% url 'core:admin_dashboard' %}" class="btn btn-dark-tb px-4">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+    </a>
 </div>
 {% endblock %}
-

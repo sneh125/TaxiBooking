@@ -1,79 +1,58 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify OTP | Taxi Booking System</title>
-    <link rel="stylesheet" href="{% static 'core/css/login.css' %}">
-</head>
-<body>
-    <main class="auth-layout">
-        <section class="brand-panel" aria-hidden="true">
-            <div class="brand-content">
-                <div class="brand-badge">
-                    <span>Taxi Booking System</span>
-                </div>
-                <h1 class="brand-heading">Verify Your One-Time Password</h1>
-                <p class="brand-description">
-                    Check the Django server console output for the 6-digit OTP sent to {{ reset_email|default:"your email" }}.
-                </p>
+{% extends 'core/base_auth.html' %}
+
+{% block title %}Verify OTP | Taxi Booking System{% endblock %}
+
+{% block brand_heading %}Verify Your One-Time Password{% endblock %}
+{% block brand_description %}Check the Django server console output for the 6-digit OTP sent to {{ reset_email|default:"your email" }}.{% endblock %}
+{% block brand_highlights %}
+<div class="d-flex align-items-center gap-2">
+    <i class="bi bi-terminal text-warning"></i>
+    <span>Delivered via Console Email Backend</span>
+</div>
+<div class="d-flex align-items-center gap-2">
+    <i class="bi bi-shield-check text-warning"></i>
+    <span>Server-Side Session Verification</span>
+</div>
+{% endblock %}
+
+{% block card_content %}
+<header class="mb-4">
+    <span class="tb-pill mb-2"><i class="bi bi-patch-check"></i> Step 2 of 3</span>
+    <h2 class="h4 fw-bold mb-1">Enter OTP</h2>
+    <p class="text-muted small mb-0">Enter the 6-digit OTP sent to <strong>{{ reset_email }}</strong>.</p>
+</header>
+
+{% if messages %}
+    <div class="mb-3" role="status" aria-live="polite">
+        {% for message in messages %}
+            <div class="alert alert-{% if 'error' in message.tags %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} d-flex align-items-center gap-2 py-2 px-3 small mb-2">
+                <i class="bi {% if 'error' in message.tags %}bi-exclamation-circle-fill{% else %}bi-check-circle-fill{% endif %}"></i>
+                <span>{{ message }}</span>
             </div>
-            <div class="brand-footer">
-                &copy; {% now "Y" %} Taxi Booking System
-            </div>
-        </section>
+        {% endfor %}
+    </div>
+{% endif %}
 
-        <section class="form-panel">
-            <div class="login-card">
-                <header class="card-header">
-                    <span class="role-pill">Step 2 of 3</span>
-                    <h2>Enter OTP</h2>
-                    <p>Enter the 6-digit OTP sent to <strong>{{ reset_email }}</strong>.</p>
-                </header>
+<form method="post" action="{% url 'core:admin_verify_otp' %}" novalidate>
+    {% csrf_token %}
+    <div class="mb-4 {% if form.otp.errors %}has-error{% endif %}">
+        <label for="{{ form.otp.id_for_label }}" class="form-label fw-semibold small">{{ form.otp.label }}</label>
+        <div class="tb-input-group">
+            <i class="bi bi-shield-lock tb-input-icon" aria-hidden="true"></i>
+            {{ form.otp }}
+        </div>
+        <div class="tb-field-error" role="alert">
+            {% if form.otp.errors %}{{ form.otp.errors.0 }}{% endif %}
+        </div>
+    </div>
 
-                {% if messages %}
-                    <div class="alerts-container" role="status" aria-live="polite">
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags|default:'info' }}">
-                                <span>{{ message }}</span>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+    <button type="submit" class="btn btn-taxi w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+        <span>Verify OTP</span>
+        <i class="bi bi-arrow-right"></i>
+    </button>
+</form>
 
-                <form method="post" action="{% url 'core:admin_verify_otp' %}" novalidate>
-                    {% csrf_token %}
-                    <div class="form-group {% if form.otp.errors %}has-error{% endif %}">
-                        <label for="{{ form.otp.id_for_label }}" class="form-label">{{ form.otp.label }}</label>
-                        <div class="input-wrapper">
-                            <span class="input-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                                </svg>
-                            </span>
-                            {{ form.otp }}
-                        </div>
-                        <div class="field-error" role="alert">
-                            {% if form.otp.errors %}{{ form.otp.errors.0 }}{% endif %}
-                        </div>
-                    </div>
-
-                    <button type="submit" class="submit-btn">
-                        <span>Verify OTP</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </button>
-                </form>
-
-                <footer class="card-footer">
-                    <p><a href="{% url 'core:admin_forgot_password' %}" class="auth-link">Resend / Request New OTP</a></p>
-                </footer>
-            </div>
-        </section>
-    </main>
-</body>
-</html>
+<footer class="mt-4 pt-3 border-top text-center small text-muted">
+    <p class="mb-0"><a href="{% url 'core:admin_forgot_password' %}" class="tb-auth-link">Resend / Request New OTP</a></p>
+</footer>
+{% endblock %}
