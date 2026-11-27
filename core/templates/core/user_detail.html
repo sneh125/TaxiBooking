@@ -45,12 +45,16 @@
                     <a href="{% url 'core:user_edit' passenger.id %}" class="btn btn-taxi">
                         <i class="bi bi-pencil-square me-1"></i> Edit User
                     </a>
-                    <form method="post" action="{% url 'core:user_delete' passenger.id %}" class="d-inline" onsubmit="return confirm('Delete user {{ passenger.name }}?');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger">
-                            <i class="bi bi-trash me-1"></i> Delete User
-                        </button>
-                    </form>
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#confirmDeleteModal"
+                        data-delete-url="{% url 'core:user_delete' passenger.id %}"
+                        data-delete-label="user {{ passenger.name }}"
+                    >
+                        <i class="bi bi-trash me-1"></i> Delete User
+                    </button>
                     <a href="{% url 'core:user_list' %}" class="btn btn-outline-secondary ms-auto">Back</a>
                 </div>
             </div>

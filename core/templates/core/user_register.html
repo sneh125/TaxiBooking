@@ -100,6 +100,7 @@
 </form>
 
 <footer class="mt-4 pt-3 border-top text-center small text-muted">
+    <p class="mb-2">Already have an account? <a href="{% url 'core:user_login' %}" class="tb-auth-link">User Sign In</a></p>
     <p class="mb-0">Administrator? <a href="{% url 'core:admin_login' %}" class="tb-auth-link">Admin Sign In</a></p>
 </footer>
 {% endblock %}

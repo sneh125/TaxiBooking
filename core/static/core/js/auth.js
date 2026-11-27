@@ -29,4 +29,21 @@
             toggleInputVisibility(button, targetInput);
         });
     });
+
+    const deleteModal = document.getElementById('confirmDeleteModal');
+    const deleteForm = document.getElementById('confirmDeleteForm');
+    const deleteMessage = document.getElementById('confirmDeleteMessage');
+
+    if (deleteModal && deleteForm && deleteMessage) {
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const trigger = event.relatedTarget;
+            if (!trigger) {
+                return;
+            }
+            const url = trigger.getAttribute('data-delete-url') || '';
+            const label = trigger.getAttribute('data-delete-label') || 'this record';
+            deleteForm.action = url;
+            deleteMessage.textContent = 'Are you sure you want to delete ' + label + '? This action cannot be undone.';
+        });
+    }
 })();

@@ -482,6 +482,19 @@ class UserRegistrationForm(forms.Form):
         ),
     )
 
+    def clean_name(self):
+        name = self.cleaned_data['name'].strip()
+        if len(name) < 2:
+            raise ValidationError('Name must be at least 2 characters long.')
+        return name
+
+    def clean_phone(self):
+        phone = self.cleaned_data['phone'].strip().replace(' ', '').replace('-', '')
+        digits = phone[1:] if phone.startswith('+') else phone
+        if not digits.isdigit() or not (10 <= len(digits) <= 15):
+            raise ValidationError('Please enter a valid 10 to 15 digit phone number.')
+        return phone
+
     def clean_email(self):
         email = self.cleaned_data['email'].strip().lower()
         if PassengerUser.objects.filter(email__iexact=email).exists():
@@ -501,3 +514,43 @@ class UserRegistrationForm(forms.Form):
             mobile=self.cleaned_data['phone'],
             password=self.cleaned_data['password'],
         )
+
+
+class UserLoginForm(forms.Form):
+    """Passenger login form authenticating against user.models.User."""
+
+    email = forms.EmailField(
+        label='Email',
+        max_length=254,
+        error_messages={
+            'required': 'Please enter your email address.',
+            'invalid': 'Please enter a valid email address.',
+        },
+        widget=forms.EmailInput(
+            attrs={
+                'id': 'id_user_email',
+                'class': 'form-control tb-input',
+                'placeholder': 'you@example.com',
+                'autocomplete': 'email',
+                'autofocus': True,
+            }
+        ),
+    )
+    password = forms.CharField(
+        label='Password',
+        strip=False,
+        error_messages={
+            'required': 'Please enter your password.',
+        },
+        widget=forms.PasswordInput(
+            attrs={
+                'id': 'id_user_login_password',
+                'class': 'form-control tb-input tb-input-password',
+                'placeholder': 'Enter your password',
+                'autocomplete': 'current-password',
+            }
+        ),
+    )
+
+    def clean_email(self):
+        return self.cleaned_data['email'].strip().lower()

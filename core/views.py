@@ -4,6 +4,7 @@ import time
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import check_password
 from django.core.mail import send_mail
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -19,6 +20,7 @@ from .forms import (
     AdminVerifyOTPForm,
     DriverForm,
     PassengerUserForm,
+    UserLoginForm,
     UserRegistrationForm,
 )
 from .models import AdminProfile
@@ -242,6 +244,14 @@ def driver_delete(request, driver_id):
     return redirect('core:driver_list')
 
 
+def _get_logged_in_passenger(request):
+    """Return the logged-in PassengerUser from session, or None."""
+    passenger_id = request.session.get('passenger_user_id')
+    if not passenger_id:
+        return None
+    return PassengerUser.objects.filter(pk=passenger_id).first()
+
+
 # Task 26: Public User Registration page
 @never_cache
 def user_register(request):
@@ -253,12 +263,55 @@ def user_register(request):
             form.save()
             messages.success(
                 request,
-                'Account registered successfully! You are now registered with Taxi Booking System.',
+                'Account registered successfully! Please sign in.',
             )
-            return redirect('core:user_register')
+            return redirect('core:user_login')
         messages.error(request, 'Registration failed. Please fix the errors below.')
 
     return render(request, 'core/user_register.html', {'form': form})
+
+
+@never_cache
+def user_login(request):
+    """Handle passenger login using email and hashed password verification."""
+    if _get_logged_in_passenger(request) is not None:
+        return redirect('core:user_dashboard')
+
+    form = UserLoginForm(request.POST if request.method == 'POST' else None)
+
+    if request.method == 'POST' and form.is_valid():
+        email = form.cleaned_data['email']
+        password = form.cleaned_data['password']
+        passenger = PassengerUser.objects.filter(email__iexact=email).first()
+
+        if passenger is None or not check_password(password, passenger.password):
+            form.add_error(None, 'Invalid email or password. Please try again.')
+        else:
+            request.session['passenger_user_id'] = passenger.pk
+            messages.success(request, f'Welcome back, {passenger.name}!')
+            return redirect('core:user_dashboard')
+
+    return render(request, 'core/user_login.html', {'form': form})
+
+
+@never_cache
+def user_dashboard(request):
+    """Render the passenger dashboard after login."""
+    passenger = _get_logged_in_passenger(request)
+    if passenger is None:
+        request.session.pop('passenger_user_id', None)
+        messages.error(request, 'Please sign in to access your dashboard.')
+        return redirect('core:user_login')
+
+    return render(request, 'core/user_dashboard.html', {'passenger': passenger})
+
+
+@require_POST
+def user_logout(request):
+    """Sign out the current passenger and redirect to user login."""
+    request.session.pop('passenger_user_id', None)
+    messages.success(request, 'You have been signed out successfully.')
+    return redirect('core:user_login')
 
 
 # Task 17: User listing page for admin with add / edit / delete options

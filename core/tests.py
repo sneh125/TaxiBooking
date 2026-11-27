@@ -481,8 +481,8 @@ class UserRegistrationTests(TestCase):
             },
             follow=True,
         )
-        self.assertRedirects(response, self.register_url)
-        self.assertContains(response, 'Account registered successfully!')
+        self.assertRedirects(response, reverse('core:user_login'))
+        self.assertContains(response, 'Account registered successfully! Please sign in.')
 
         user = PassengerUser.objects.get(email='neha@example.com')
         self.assertEqual(user.name, 'Neha Trivedi')
@@ -512,3 +512,73 @@ class UserRegistrationTests(TestCase):
         )
         self.assertEqual(dup_res.status_code, 200)
         self.assertContains(dup_res, 'A user with this email address is already registered.')
+
+    def test_invalid_name_and_phone_rejected(self):
+        res = self.client.post(
+            self.register_url,
+            {
+                'name': 'A',
+                'email': 'validuser@example.com',
+                'phone': 'abc123',
+                'password': 'StrongUserPass123!',
+            },
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'Name must be at least 2 characters long.')
+        self.assertContains(res, 'Please enter a valid 10 to 15 digit phone number.')
+        self.assertFalse(PassengerUser.objects.filter(email='validuser@example.com').exists())
+
+
+class UserLoginAndDashboardTests(TestCase):
+    """Tests for Passenger User login, dashboard, and logout."""
+
+    def setUp(self):
+        self.login_url = reverse('core:user_login')
+        self.dashboard_url = reverse('core:user_dashboard')
+        self.logout_url = reverse('core:user_logout')
+
+        self.passenger = PassengerUser.objects.create(
+            name='Riya Sharma',
+            email='riya@example.com',
+            mobile='9876543211',
+            password='RiyaStrongPass123!',
+        )
+
+    def test_user_login_page_renders_fields_and_toggle(self):
+        response = self.client.get(self.login_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'core/user_login.html')
+        self.assertContains(response, 'name="email"')
+        self.assertContains(response, 'name="password"')
+        self.assertContains(response, 'data-toggle-password="id_user_login_password"')
+
+    def test_unauthenticated_user_dashboard_redirects_to_user_login(self):
+        response = self.client.get(self.dashboard_url)
+        self.assertRedirects(response, self.login_url)
+
+    def test_invalid_user_credentials_show_error(self):
+        response = self.client.post(
+            self.login_url,
+            {'email': 'riya@example.com', 'password': 'WrongPassword!'},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Invalid email or password. Please try again.')
+        self.assertIsNone(self.client.session.get('passenger_user_id'))
+
+    def test_valid_user_login_redirects_to_dashboard_and_logout_clears_session(self):
+        login_res = self.client.post(
+            self.login_url,
+            {'email': 'RIYA@example.com', 'password': 'RiyaStrongPass123!'},
+            follow=True,
+        )
+        self.assertRedirects(login_res, self.dashboard_url)
+        self.assertTemplateUsed(login_res, 'core/user_dashboard.html')
+        self.assertContains(login_res, 'Welcome, Riya Sharma')
+        self.assertContains(login_res, 'riya@example.com')
+        self.assertContains(login_res, '9876543211')
+        self.assertEqual(self.client.session.get('passenger_user_id'), self.passenger.pk)
+
+        logout_res = self.client.post(self.logout_url, follow=True)
+        self.assertRedirects(logout_res, self.login_url)
+        self.assertIsNone(self.client.session.get('passenger_user_id'))
+        self.assertContains(logout_res, 'You have been signed out successfully.')

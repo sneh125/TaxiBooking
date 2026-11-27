@@ -47,12 +47,16 @@
                 </ul>
 
                 <div class="d-flex gap-2">
-                    <form method="post" action="{% url 'core:driver_delete' driver.id %}" class="d-inline" onsubmit="return confirm('Delete driver {{ driver.name }}?');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger">
-                            <i class="bi bi-trash me-1"></i> Delete Driver
-                        </button>
-                    </form>
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#confirmDeleteModal"
+                        data-delete-url="{% url 'core:driver_delete' driver.id %}"
+                        data-delete-label="driver {{ driver.name }}"
+                    >
+                        <i class="bi bi-trash me-1"></i> Delete Driver
+                    </button>
                     <a href="{% url 'core:driver_list' %}" class="btn btn-outline-secondary ms-auto">Back to Drivers</a>
                 </div>
             </div>

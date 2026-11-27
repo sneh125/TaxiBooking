@@ -501,6 +501,45 @@ h1, h2, h3, h4, .display-6 {
     margin-bottom: 0.85rem;
 }
 
+/* Auth Taxi Showcase & Modals */
+.tb-auth-taxi {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0;
+}
+
+.tb-auth-taxi::before {
+    content: "";
+    position: absolute;
+    width: 78%;
+    height: 85px;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(255, 193, 7, 0.22) 0%, rgba(255, 193, 7, 0.05) 55%, transparent 75%);
+    filter: blur(16px);
+    pointer-events: none;
+}
+
+.tb-auth-taxi img {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 400px;
+    max-height: 220px;
+    object-fit: contain;
+    -webkit-mask-image: radial-gradient(ellipse 84% 78% at 50% 52%, #000 56%, transparent 98%);
+    mask-image: radial-gradient(ellipse 84% 78% at 50% 52%, #000 56%, transparent 98%);
+}
+
+.tb-modal-content {
+    border-radius: 16px;
+    border: 1px solid var(--tb-border);
+    box-shadow: var(--tb-shadow-md);
+}
+
 /* Responsive Breakpoints */
 @media (max-width: 991.98px) {
     .tb-auth-shell {
